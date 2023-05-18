@@ -52,7 +52,7 @@ Resources:
   DecryptionFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: index.Decryption
+      Handler: index.decryption
       Runtime: python3.9
       MemorySize: 256
       Timeout: 900
@@ -60,4 +60,9 @@ Resources:
       Environment:
         Variables:
           KMS_KEY: !Ref EvadataKmsKey
-  
+
+  DecryptionFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join ['/', ['/aws/lambda', !Ref DecryptionFunction]]
+      RetentionInDays: 731
