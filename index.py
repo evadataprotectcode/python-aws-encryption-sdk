@@ -4,7 +4,7 @@ import aws_encryption_sdk
 from aws_encryption_sdk.identifiers import CommitmentPolicy
 
 
-def Decryption(event, context):
+def decryption(event, context):
     s3 = boto3.client('s3')
 
     bucket = event['Records'][0]['s3']['bucket']['name']
@@ -19,14 +19,14 @@ def Decryption(event, context):
         key_ids=[os.environ['KMS_KEY']]
     )
 
-    fileObj = s3.get_object(
+    file_obj = s3.get_object(
         Bucket=bucket,
         Key=key
     )['Body']
 
     with client.stream(
         mode='d',
-        source=fileObj,
+        source=file_obj,
         key_provider=kms_key_provider
     ) as decryptor:
         s3.upload_fileobj(decryptor, bucket, destination_key)
