@@ -7,8 +7,10 @@ from aws_encryption_sdk.identifiers import CommitmentPolicy
 def decryption(event, context):
     s3 = boto3.client('s3')
 
+    # Set up to handle S3 Create Object Triggers
     bucket = event['Records'][0]['s3']['bucket']['name']
     key = event['Records'][0]['s3']['object']['key']
+    
     destination_key = 'decrypted/' + key
 
     client = aws_encryption_sdk.EncryptionSDKClient(
@@ -16,7 +18,7 @@ def decryption(event, context):
     )
 
     kms_key_provider = aws_encryption_sdk.StrictAwsKmsMasterKeyProvider(
-        key_ids=[os.environ['KMS_KEY']]
+        key_ids=[os.environ['KMS_KEY']] # This is defined in template.yml. You can change it there
     )
 
     file_obj = s3.get_object(
