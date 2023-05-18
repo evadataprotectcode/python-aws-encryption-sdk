@@ -1,0 +1,63 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Transfer Data for Analytics Environment
+
+Parameters:
+  EvadataKmsKey:
+    Type: String
+    Description: KmsKeyArn provided by Evadata
+    Default: arn:aws:kms:us-east-1:708206112830:key/99b667a2-30d0-4727-ad1f-875c1bad5ccb
+  S3BucketName:
+    Type: String
+    Description: S3 Bucket where this file is located
+    Default: lens-v2-carrier-c-match-files
+
+Resources:
+  DecryptionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: /
+      Description: This role is for the Decryption lambda function
+      MaxSessionDuration: 3600
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      - arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy
+      Policies:
+      - PolicyName: file-access
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - kms:decrypt
+            Resource: !Ref EvadataKmsKey
+          - Effect: Allow
+            Action:
+            - s3:getObject
+            - s3:putObject
+            Resource: 
+              - !Sub arn:aws:s3:::${S3BucketName}
+              - !Sub arn:aws:s3:::${S3BucketName}/*
+
+  DecryptionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.Decryption
+      Runtime: python3.9
+      MemorySize: 256
+      Timeout: 900
+      Role: !GetAtt DecryptionRole.Arn
+      Environment:
+        Variables:
+          KMS_KEY: !Ref EvadataKmsKey
+  
