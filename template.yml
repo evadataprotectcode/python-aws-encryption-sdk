@@ -13,7 +13,7 @@ Parameters:
 
 Resources:
   # Comment: I will reference s3BucketName later in the code. Please deploy this code in the template where your match bucket is created and anywhere I commented about the bucket name, you will want to reference this bucketName
-  # This bucket does not need to be created, just showing it so I can reference the name of it
+  # This bucket should not be created. This bucket is not secure. Just showing it so I can reference the name of it
   s3Bucket:
     Type: AWS::S3::Bucket
     Properties:
