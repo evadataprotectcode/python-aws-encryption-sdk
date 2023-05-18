@@ -60,7 +60,7 @@ Resources:
     Properties:
       Handler: index.decryption
       Runtime: python3.9
-      MemorySize: 256
+      MemorySize: 512
       Timeout: 900
       Role: !GetAtt DecryptionRole.Arn
       Environment:
@@ -76,7 +76,7 @@ Resources:
               S3Key:
                 Rules:
                   - Name: prefix
-                    Value: lens
+                    Value: lens # This can be the prefix of the match file prefix. Must be something other than decrypted
 
   DecryptionFunctionPermission:
     Type: AWS::Lambda::Permission
