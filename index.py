@@ -9,7 +9,7 @@ def Decryption(event, context):
 
     bucket = event['Records'][0]['s3']['bucket']['name']
     key = event['Records'][0]['s3']['object']['key']
-    destination_key = 'decryption/' + key
+    destination_key = 'decrypted/' + key
 
     client = aws_encryption_sdk.EncryptionSDKClient(
         commitment_policy=CommitmentPolicy.FORBID_ENCRYPT_ALLOW_DECRYPT
