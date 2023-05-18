@@ -1,18 +1,24 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: Transfer Data for Analytics Environment
 
 Parameters:
   EvadataKmsKey:
     Type: String
     Description: KmsKeyArn provided by Evadata
-    Default: arn:aws:kms:us-east-1:708206112830:key/99b667a2-30d0-4727-ad1f-875c1bad5ccb
-  S3BucketName:
+    Default: arn:aws:kms:us-east-1:XXXXXXXXXXXX:key/XXXXXXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX # Update with the KMS Key Arn provide by Evadata
+  s3BucketName:
     Type: String
-    Description: S3 Bucket where this file is located
-    Default: lens-v2-carrier-c-match-files
+    Description: s3BucketName
+    Default: evadata-match-bucket-name # Update this with the bucket name depending on the environment
 
 Resources:
+  # Comment: I will reference s3BucketName later in the code. Please deploy this code in the template where your match bucket is created and anywhere I commented about the bucket name, you will want to reference this bucketName
+  # This bucket should not be created. This bucket is not secure. Just showing it so I can reference the name of it
+  s3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref s3BucketName #TO-DO: Update the bucketName to reference the parameter. This will allow for correct permissions downstream.
+
   DecryptionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -46,8 +52,8 @@ Resources:
             - s3:getObject
             - s3:putObject
             Resource: 
-              - !Sub arn:aws:s3:::${S3BucketName}
-              - !Sub arn:aws:s3:::${S3BucketName}/*
+              - !Sub arn:aws:s3:::${s3BucketName} # s3BucketName is defined as a parameter. Update the parameter to obtain the correct permissions
+              - !Sub arn:aws:s3:::${s3BucketName}/* # s3BucketName is defined as a parameter. Update the parameter to obtain the correct permissions
 
   DecryptionFunction:
     Type: AWS::Serverless::Function
@@ -60,6 +66,26 @@ Resources:
       Environment:
         Variables:
           KMS_KEY: !Ref EvadataKmsKey
+      Events:
+        TriggerDecryption:
+          Type: S3
+          Properties:
+            Bucket: !Ref s3Bucket #TODO: REPLACE Reference the match bucket directly here
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: lens
+
+  DecryptionFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt DecryptionFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: s3.amazonaws.com
+      SourceAccount: !Ref 'AWS::AccountId'
+      SourceArn: !Sub arn:aws:s3:::${s3BucketName} # s3BucketName is defined as a parameter. Update the parameter to obtain the correct permissions
 
   DecryptionFunctionLogGroup:
     Type: AWS::Logs::LogGroup
